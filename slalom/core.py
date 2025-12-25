@@ -375,24 +375,24 @@ class CSparseFA(AExpressionModule):
 
         if (m<self.nKnown) or (m in self.iLatentSparse) or (m in self.iLatent):
             with SP.errstate(divide='ignore'):
-                logPi = SP.log(self.Pi.E1[:,m]/(1-self.Pi.E1[:,m]))                        
+                logPi = np.log(self.Pi.E1[:,m]/(1-self.Pi.E1[:,m]))                        
             #logPi = (self.Pi.lnE1 - (special.digamma(self.Pi.b) - special.digamma(self.Pi.a+self.Pi.b)))[:,m]
 
         elif self.nScale>0 and self.nScale<YmeanX.shape[0]:
             with SP.errstate(divide='ignore'):
-                logPi = SP.log(self.Pi.E1[:,m]/(1-self.Pi.E1[:,m]))   
+                logPi = np.log(self.Pi.E1[:,m]/(1-self.Pi.E1[:,m]))   
             #logPi = self.Pi.lnE1 - (special.digamma(self.Pi.b) - special.digamma(self.Pi.a+self.Pi.b))
             isOFF_ = self.Pi.E1[:,m]<.5        
-            logPi[isOFF_] = (YmeanX.shape[0]/self.nScale)*SP.log(self.Pi.E1[isOFF_,m]/(1-self.Pi.E1[isOFF_,m]))   
+            logPi[isOFF_] = (YmeanX.shape[0]/self.nScale)*np.log(self.Pi.E1[isOFF_,m]/(1-self.Pi.E1[isOFF_,m]))   
 
             isON_ = self.Pi.E1[:,m]>.5        
 
             if self.onF>1.:
-                logPi[isON_] = self.onF*SP.log(self.Pi.E1[isON_,m]/(1-self.Pi.E1[isON_,m]))
+                logPi[isON_] = self.onF*np.log(self.Pi.E1[isON_,m]/(1-self.Pi.E1[isON_,m]))
 
         else:
             onF = 1.
-            logPi = SP.log(self.Pi.E1[:,m]/(1-self.Pi.E1[:,m]))  
+            logPi = np.log(self.Pi.E1[:,m]/(1-self.Pi.E1[:,m]))  
 
         sigma2Sigmaw = (1.0/self.Eps.E1)*self.Alpha.E1[m]
 
@@ -410,7 +410,7 @@ class CSparseFA(AExpressionModule):
         
         #update C and W 
         
-        u_qm = logPi + 0.5*SP.log(sigma2Sigmaw) - 0.5*SP.log(SmTSmSig) + (0.5*self.Eps.E1)*((diff**2)/SmTSmSig)
+        u_qm = logPi + 0.5*np.log(sigma2Sigmaw) - 0.5*np.log(SmTSmSig) + (0.5*self.Eps.E1)*((diff**2)/SmTSmSig)
         u_qm = np.array(u_qm, dtype=float)
         with SP.errstate(over='ignore'):
             self.W.C[:, m,0] = 1./(1+np.exp(-u_qm))
@@ -719,7 +719,7 @@ class CSparseFA(AExpressionModule):
                 self.meanZ = Zstd.mean(0)
                 Zstd-=Zstd.mean(0)
             elif self.noise == 'poisson':
-                Zstd = SP.log2(self.Z.E1.astype('float64')+1)
+                Zstd = np.log2(self.Z.E1.astype('float64')+1)
                 Zstd -= Zstd.mean(0)
             else:
                 Zstd = self.Z.E1
@@ -819,7 +819,7 @@ class CSparseFA(AExpressionModule):
     #calculate the variational bound:
     def calcBound(self):
         #TODO: debug!! DO NOT USE 
-        F1 = -self._D*self._N/2*SP.log(2*pi) - self._N/2 * SP.sum(SP.log(1/self.Eps.E1)) - \
+        F1 = -self._D*self._N/2*np.log(2*pi) - self._N/2 * SP.sum(np.log(1/self.Eps.E1)) - \
             0.5*SP.sum(self.ZZ*self.Eps.E1)
 
         SW_tau = (self.W.C[:, :,0]*self.W.E1)*SP.tile(self.Eps.E1,(self.W.E1.shape[1],1)).T
@@ -848,36 +848,36 @@ class CSparseFA(AExpressionModule):
 
             #F7
             alphaSm= SP.sum(SW2_tau[:,m])
-            F7PlusE3 = F7PlusE3 - 0.5*self._N*SP.log(1+alphaSm)  - (0.5*self._N)/(1+alphaSm) \
+            F7PlusE3 = F7PlusE3 - 0.5*self._N*np.log(1+alphaSm)  - (0.5*self._N)/(1+alphaSm) \
                             - 0.5*SP.dot(self.S.E1[:,m].T, self.S.E1[:,m])
 
-        F5 = -(0.5*self.components*self._D)*SP.log(2.*pi) - (0.5*self.components)*sum(SP.log(1./self.Alpha.E1)) - \
+        F5 = -(0.5*self.components*self._D)*np.log(2.*pi) - (0.5*self.components)*sum(np.log(1./self.Alpha.E1)) - \
             0.5* SP.sum(1-self.W.C[:,:,0]) + SP.sum(SP.sum(self.W.C[:,:,0]*self.W.E2diag,0)*self.Alpha.E1)
                 
-        F6 = SP.sum(SP.log(self.Pi.E1)*self.W.C[:,:,0]) + SP.sum(SP.log(1.-self.Pi.E1)*(1-self.W.C[:,:,0]))
+        F6 = SP.sum(np.log(self.Pi.E1)*self.W.C[:,:,0]) + SP.sum(np.log(1.-self.Pi.E1)*(1-self.W.C[:,:,0]))
 
 
 
-        EpslnE = special.digamma(self.Eps.a) - SP.log(self.Eps.b)
+        EpslnE = special.digamma(self.Eps.a) - np.log(self.Eps.b)
         F8 = (self.Eps.pa-1)*SP.sum(EpslnE) - self.Eps.pb*SP.sum(self.Eps.E1)
 
 
-        AlphalnE = special.digamma(self.Alpha.a) - SP.log(self.Alpha.b)
+        AlphalnE = special.digamma(self.Alpha.a) - np.log(self.Alpha.b)
         F9 = (self.Alpha.pa-1)*SP.sum(AlphalnE) - self.Alpha.pb*SP.sum(self.Alpha.E1)
 
 
-        E1 = (0.5*self.components*self._D)*SP.log(2*pi) + (0.5*self.components)*SP.sum(SP.log(1./self.Alpha.E1)) + \
-            0.5*(self.components*self._D) - 0.5*SP.sum(SP.log(1./self.Alpha.E1)*(SP.sum(self.W.C[:,:,0],0))) \
-             + 0.5*SP.sum( self.W.C[:,:,0]*SP.log(self.W.sigma2))
+        E1 = (0.5*self.components*self._D)*np.log(2*pi) + (0.5*self.components)*SP.sum(np.log(1./self.Alpha.E1)) + \
+            0.5*(self.components*self._D) - 0.5*SP.sum(np.log(1./self.Alpha.E1)*(SP.sum(self.W.C[:,:,0],0))) \
+             + 0.5*SP.sum( self.W.C[:,:,0]*np.log(self.W.sigma2))
          
-        E2 = - SP.sum( self.W.C[:,:,0]*SP.log(self.W.C[:,:,0]+(self.W.C[:,:,0]==0)) + \
+        E2 = - SP.sum( self.W.C[:,:,0]*np.log(self.W.C[:,:,0]+(self.W.C[:,:,0]==0)) + \
             (1-self.W.C[:,:,0])*log(1-self.W.C[:,:,0]+(self.W.C[:,:,0]==1)))
 
-        E4 = SP.sum(self.Eps.a*SP.log(self.Eps.b)) + SP.sum((self.Eps.a-1)*EpslnE) -\
+        E4 = SP.sum(self.Eps.a*np.log(self.Eps.b)) + SP.sum((self.Eps.a-1)*EpslnE) -\
              SP.sum(self.Eps.b*self.Eps.E1) - SP.sum(special.gammaln(self.Eps.a))
 
 
-        E5 = SP.sum(self.Alpha.a*SP.log(self.Alpha.b)) + SP.sum((self.Alpha.a-1)*AlphalnE) -\
+        E5 = SP.sum(self.Alpha.a*np.log(self.Alpha.b)) + SP.sum((self.Alpha.a-1)*AlphalnE) -\
              SP.sum(self.Alpha.b*self.Alpha.E1) - SP.sum(special.gammaln(self.Alpha.a))             
 
         #pdb.set_trace()
