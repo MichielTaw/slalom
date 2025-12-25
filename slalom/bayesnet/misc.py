@@ -32,7 +32,7 @@ def smartAppend(table,name,value):
 def dumpDictHdf5(RV,o):
 	""" Dump a dictionary where each page is a list or an array """
 	for key in list(RV.keys()):
-		o.create_dataset(name=key,data=SP.array(RV[key]),chunks=True,compression='gzip')
+		o.create_dataset(name=key,data=np.array(RV[key]),chunks=True,compression='gzip')
 
 def smartDumpDictHdf5(RV,o, chunks=True, close_file=True):
 	""" Dump a dictionary where each page is a list or an array or still a dictionary (in this case, it iterates)"""
@@ -41,10 +41,10 @@ def smartDumpDictHdf5(RV,o, chunks=True, close_file=True):
 			g = o.create_group(key)
 			smartDumpDictHdf5(RV[key],g)
 		else:
-			if SP.isscalar(RV[key]):
-				o.create_dataset(name=key,data=SP.array(RV[key]),chunks=False)
+			if np.isscalar(RV[key]):
+				o.create_dataset(name=key,data=np.array(RV[key]),chunks=False)
 			else:
-				o.create_dataset(name=key,data=SP.array(RV[key]),chunks=True,compression='gzip')
+				o.create_dataset(name=key,data=np.array(RV[key]),chunks=True,compression='gzip')
 	#if close_file==True: 
 		#o.close()
      
@@ -78,7 +78,7 @@ def PCA(Y, components):
 	w0: weights
 	"""
 	sv = LA.svd(Y, full_matrices=0);
-	[s0, w0] = [sv[0][:, 0:components], SP.dot(SP.diag(sv[1]), sv[2]).T[:, 0:components]]
+	[s0, w0] = [sv[0][:, 0:components], np.dot(np.diag(sv[1]), sv[2]).T[:, 0:components]]
 	v = s0.std(axis=0)
 	s0 /= v;
 	w0 *= v;
