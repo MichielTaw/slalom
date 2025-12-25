@@ -19,6 +19,7 @@ import os.path
 import string
 import pickle
 import scipy as S
+import numpy as np
 #models which need to be made public to the xml parsing function as we create classes in here
 
 
@@ -95,9 +96,9 @@ class CXml(object):
                 elif(ptype=='matrix'):
                     value = self.parseMatrixParameter(value)
                 elif(ptype=='double'):
-                    value = S.double(value)
+                    value = np.double(value)
                 elif(ptype=='int'):
-                    value = S.int32(value)
+                    value = np.int32(value)
                 elif(ptype=='str'):
                     #no action for string
                     pass
