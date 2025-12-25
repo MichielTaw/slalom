@@ -206,7 +206,7 @@ class CVBFA(AExpressionModule):
         #pca initialisation
         if self.initType == 'pca':
             sv = linalg.svd(self.Z.E1, full_matrices = 0);
-            [s0,w0] = [sv[0][:,0:self.components], S.dot(S.diag(sv[1]),sv[2]).T[:,0:self.components]]
+            [s0,w0] = [sv[0][:,0:self.components], np.dot(np.diag(sv[1]),sv[2]).T[:,0:self.components]]
             v = s0.std(axis=0)
             s0 /= v;
             w0 *= v;
@@ -247,7 +247,7 @@ class CVBFA(AExpressionModule):
                 self.updateNode(node)
             #self.calcBound()
             #calc reconstruction error
-            Zr = S.dot(self.S.E1,self.W.E1.T)
+            Zr = np.dot(self.S.E1,self.W.E1.T)
             Zd = self.Z.E1-Zr
             error = ((Zd)**2).mean()
             print("reconstruction error: %f" % (error))
@@ -275,7 +275,7 @@ class CVBFA(AExpressionModule):
         #p(data|..)
         #OLI: is this right? the last term should be <-1/2*tau(D-W*x)^{2}>
         #try: here we recyle the calculation made in the update Eps:
-        Bx = -self._N*self._D/2.0*S.log(2*pi) + self._N/2.0*self.Eps.E2.sum() - sum(self.Eps.E1*(self.Eps.a-self.Eps.pa))
+        Bx = -self._N*self._D/2.0*np.log(2*pi) + self._N/2.0*self.Eps.E2.sum() - sum(self.Eps.E1*(self.Eps.a-self.Eps.pa))
         #Bx = -self._N*self._D/2.0*S.log(2*pi) + self._N/2.0*self.Eps.E2.sum() + sum(self.Eps.E1*self.Eps.pa-self.Eps.b)
 
 
@@ -283,10 +283,10 @@ class CVBFA(AExpressionModule):
         #KL q(S)/P(S)
         
         #orig
-        Bss= -self._N/2.0*logdet(self.S.cov) - self._N/2.0*trace(eye(self.components)-self.S.cov) + 0.5*(self.S.E1**2).sum()
+        Bss= -self._N/2.0*logdet(self.np.cov) - self._N/2.0*trace(eye(self.components)-self.np.cov) + 0.5*(self.S.E1**2).sum()
 
         #KL q(W)/p(W)
-        Bww= -self._D/2.0*sum(special.digamma(self.Alpha.b)-S.log(self.Alpha.a))
+        Bww= -self._D/2.0*sum(special.digamma(self.Alpha.b)-np.log(self.Alpha.a))
 
         for d in range(self._D):
             Bww = Bww - 1/2.0*( logdet(self.W.cov[d,:,:]) + trace(eye(self.components)-dot(self.W.E2[d,:,:],diag(self.Alpha.E1))))
@@ -304,7 +304,7 @@ class CVBFA(AExpressionModule):
 
         #make sure we always produce a prediction even if not intialized
         if self.iterationCount==0:
-            return CGauss(E1=S.array([0]),prec=S.array([0]))
+            return CGauss(E1=np.array([0]),prec=np.array([0]))
         p = dot(self.S.E1,self.W.E1.T)
         E1 = real(p)
         prec = ones(shape = self.Z.E1.shape)*self.Eps.E1
@@ -320,4 +320,4 @@ class CVBFA(AExpressionModule):
 
 def logdet(M):
     UC = linalg.cholesky(M)
-    return 2*sum(S.log(diag(UC)))
+    return 2*sum(np.log(diag(UC)))
