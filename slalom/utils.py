@@ -16,6 +16,7 @@ from sklearn.decomposition import PCA
 import h5py
 import pdb
 import scipy as SP
+import numpy as np
 import re
 import matplotlib as mpl
 import matplotlib.lines as mlines
@@ -60,7 +61,7 @@ def saveFA(FA, out_name=None, saveF=False):
     out_file.create_dataset(name='X',data=FA.getX())
     out_file.create_dataset(name='Z',data=FA.getZ())
     out_file.create_dataset(name='I',data=FA.getAnnotations())
-    out_file.create_dataset(name='terms',data=SP.array(FA.getTerms(),dtype='|S30'))
+    out_file.create_dataset(name='terms',data=np.array(FA.getTerms(),dtype='|S30'))
     out_file.create_dataset(name='idx_genes',data=FA.idx_genes.astype('int'))
     if not FA.gene_ids is None: 
         out_file.create_dataset(name='gene_ids',data=FA.gene_ids.astype("S30"),dtype='|S30')
@@ -183,7 +184,7 @@ def plotTerms(FA=None, S=None, alpha=None, terms=None, madFilter=.4):
     if FA!=None:
         S = FA.getX()
         alpha = FA.getRelevance()
-        terms = SP.array(FA.getTerms())        
+        terms = np.array(FA.getTerms())        
     else:
         assert S!=None
         assert alpha!=None
@@ -192,9 +193,9 @@ def plotTerms(FA=None, S=None, alpha=None, terms=None, madFilter=.4):
     MAD = mad(S)
     alpha = (MAD>madFilter)*(alpha)
                  
-    idx_sort = SP.argsort(terms)
+    idx_sort = np.argsort(terms)
     Y = alpha[idx_sort]
-    X =SP.arange(len(alpha))#[idx_sort]
+    X =np.arange(len(alpha))#[idx_sort]
     plt.plot(X, Y, '.',markersize=10)
     plt.xticks(X, terms[idx_sort], size='small', rotation='vertical')    
     plt.ylabel("Relevance score")
@@ -214,18 +215,18 @@ def plotLoadings(FA, term, n_genes = 10):
     Zchanged = FA.getZchanged([term])[:,0]
     W        = FA.getW([term])[:,0]
     Z        = FA.getZ([term])[:,0]
-    gene_labels = SP.array(FA.gene_ids)
+    gene_labels = np.array(FA.gene_ids)
 
     #plot weights
     
     Wabs = SP.absolute(W)*SP.absolute(Z)
-    gene_index = SP.argsort(-Wabs)[:n_genes]
+    gene_index = np.argsort(-Wabs)[:n_genes]
 
     Igain = (Zchanged[gene_index]==1)
     Ielse = (Zchanged[gene_index]==0)
 
     fig = plt.figure(figsize=(5,5))
-    y = SP.arange(len(gene_index))
+    y = np.arange(len(gene_index))
     if Ielse.any():
         plt.plot(abs(W[gene_index][Ielse]*Z[gene_index][Ielse]),y[Ielse],'k.',label='pre annotated')
     if Igain.any():
@@ -287,8 +288,8 @@ def plotRelevance(FA,Nactive=20,stacked=True, madFilter=0.4,annotated=True,unann
     if unannotated==True:
         i_use.extend(FA.iLatent)
     if annotated==True:
-        i_use.extend(SP.setxor1d(SP.hstack([SP.where(FA.terms=='bias')[0],FA.iLatentSparse, FA.iLatent]), SP.arange(len(FA.terms))))
-    i_use = SP.array(i_use)
+        i_use.extend(SP.setxor1d(SP.sparse.hstack([SP.where(FA.terms=='bias')[0],FA.iLatentSparse, FA.iLatent]), np.arange(len(FA.terms))))
+    i_use = np.array(i_use)
 
 
     X = FA.getX()[:,i_use]
@@ -300,9 +301,9 @@ def plotRelevance(FA,Nactive=20,stacked=True, madFilter=0.4,annotated=True,unann
 
     MAD = mad(X)
     R = (MAD>madFilter)*(rel)
-    terms = SP.array(terms)
+    terms = np.array(terms)
 
-    Nactive = min(SP.sum(R>0),Nactive)
+    Nactive = min(np.sum(R>0),Nactive)
 
     #terms change,s etc. 
     Nprior = Iprior.sum(axis=0)
@@ -313,9 +314,9 @@ def plotRelevance(FA,Nactive=20,stacked=True, madFilter=0.4,annotated=True,unann
 
     #sort terms by relevance
     Iactive = R.argsort()[::-1][0:Nactive]
-    RM = R[Iactive,SP.newaxis]
+    RM = R[Iactive,np.newaxis]
 
-    xticks_range = SP.arange(Nactive)
+    xticks_range = np.arange(Nactive)
     terms[terms=='hidden'] = 'Unannotated'
     terms[terms=='hiddenSparse'] = 'Unannotated-sparse'
     xticks_text  = list(terms[Iactive])
@@ -331,7 +332,7 @@ def plotRelevance(FA,Nactive=20,stacked=True, madFilter=0.4,annotated=True,unann
 
 
     width = 0.6
-    left = SP.arange(Nactive)-0.5 + (1.-width)/2.
+    left = np.arange(Nactive)-0.5 + (1.-width)/2.
     
     fig = plt.figure(2,figsize=(10,6))
     fig.subplots_adjust(bottom=0.3)
@@ -365,7 +366,7 @@ def plotRelevance(FA,Nactive=20,stacked=True, madFilter=0.4,annotated=True,unann
 
     y_max = Nprior[Iactive].max()+100.
 
-    bar_rel_importance = ax1.bar(left=SP.arange(Nactive)-0.5 ,width=1.05,height=[y_max]*len(n_prior),bottom=0,color=colors,log=True, edgecolor = 'none')
+    bar_rel_importance = ax1.bar(left=np.arange(Nactive)-0.5 ,width=1.05,height=[y_max]*len(n_prior),bottom=0,color=colors,log=True, edgecolor = 'none')
     bar_annotated = ax1.bar(left=left,width=width,height=n_prior,bottom=0,color='w',log=True,alpha=0.6, edgecolor = 'k')
 
     ax1.set_ylim([10,y_max])
@@ -392,8 +393,8 @@ def plotRelevance(FA,Nactive=20,stacked=True, madFilter=0.4,annotated=True,unann
         bar_gain = ax0.bar(left=left,width=width,height=n_gain,bottom=0,color='#861608')
         bar_loss = ax0.bar(left=left,width=width,height=n_loss,bottom=0,color='#0c09a0')
     else: 
-        bar_gain = ax0.bar(left=SP.arange(Nactive)-0.5,width=0.5,height=n_gain,bottom=0,color='#861608')
-        bar_loss = ax0.bar(left=SP.arange(Nactive),width=0.5,height=n_loss,bottom=0,color='#0c09a0')
+        bar_gain = ax0.bar(left=np.arange(Nactive)-0.5,width=0.5,height=n_gain,bottom=0,color='#861608')
+        bar_loss = ax0.bar(left=np.arange(Nactive),width=0.5,height=n_loss,bottom=0,color='#0c09a0')
 
     #figure out range to make ylim symmatrix
     ax0.axhline(y=0,linestyle='-',color='gray')
@@ -402,7 +403,7 @@ def plotRelevance(FA,Nactive=20,stacked=True, madFilter=0.4,annotated=True,unann
     gap = SP.ceil(max(max(n_gain), abs(min(n_loss)))/4.)
     y_max = SP.ceil(max(n_gain)/gap)
     y_min = SP.floor(min(n_loss)/gap)
-    yticks = SP.arange(y_min*gap,y_max*gap,gap)
+    yticks = np.arange(y_min*gap,y_max*gap,gap)
     ax0.set_yticks(yticks)
     ax0.set_ylabel('Gene set augemntation', fontsize=13.5)
     ax0.legend((bar_gain[0],bar_loss[0]),('Gain','Loss'),ncol=1,loc='center left', bbox_to_anchor=(1, 0.5),frameon=False, fontsize=15)
@@ -416,10 +417,10 @@ def plotRelevance(FA,Nactive=20,stacked=True, madFilter=0.4,annotated=True,unann
     
 
 def vcorrcoef(X,y):
-    Xm = SP.reshape(SP.mean(X,axis=1),(X.shape[0],1))
-    ym = SP.mean(y)
-    r_num = SP.sum((X-Xm)*(y-ym),axis=1)
-    r_den = SP.sqrt(SP.sum((X-Xm)**2,axis=1)*SP.sum((y-ym)**2))
+    Xm = SP.reshape(np.mean(X,axis=1),(X.shape[0],1))
+    ym = np.mean(y)
+    r_num = np.sum((X-Xm)*(y-ym),axis=1)
+    r_den = SP.sqrt(np.sum((X-Xm)**2,axis=1)*np.sum((y-ym)**2))
     r = r_num/r_den
     return r
 
@@ -433,7 +434,7 @@ def getIlabel(order, Y, terms, pi,init_factors=None):
         Ilabel = preTrain(Y, terms, pi,init_factors)
         return Ilabel
     else:
-        PCs = SP.zeros((Y.shape[0], pi.shape[1]))
+        PCs = np.zeros((Y.shape[0], pi.shape[1]))
         for k in pi.shape[1]:
             pca = PCA(n_components=1)
             pca.fit_transform(Y[:,pi[:,k]>.5])
@@ -442,7 +443,7 @@ def getIlabel(order, Y, terms, pi,init_factors=None):
         X  = pca.fit_transform(Y)
         nFix = (SP.where(terms=='hidden')[0]).min()+len(SP.where(terms=='hidden')[0])
         MPC = abs(vcorrcoef(PCs.T,X.T))[nFix:]
-        IpiRev = SP.argsort(MPC.ravel())      
+        IpiRev = np.argsort(MPC.ravel())      
         Ilabel = list(range(len(terms)))
         Ilabel[nFix:] = IpiRev+nFix
         return Ilabel
@@ -474,7 +475,7 @@ def preTrain(Y, terms, P_I, noise='gauss', nFix=None, priors=None, covariates=No
     init_params = {}
     init_params['noise'] = noise
     init_params['iLatent'] = SP.where(terms=='hidden')[0]    
-    init_params['iLatentSparse'] = SP.array([])#SP.where(terms=='hiddenSparse')[0]    
+    init_params['iLatentSparse'] = np.array([])#SP.where(terms=='hiddenSparse')[0]    
     if not (covariates is None):
         init_params['Known'] = covariates
     learnPi=False
@@ -498,7 +499,7 @@ def preTrain(Y, terms, P_I, noise='gauss', nFix=None, priors=None, covariates=No
     #initType = 'pcaRand'
     terms0=terms
     pi0=pi.copy()
-    FA0 = slalom.CSparseFA(components=K,sigmaOff=sigmaOff,sigmaOn=SP.ones(pi.shape[1])*1.0,sparsity=sparsity,nIterations=50,
+    FA0 = slalom.CSparseFA(components=K,sigmaOff=sigmaOff,sigmaOn=np.ones(pi.shape[1])*1.0,sparsity=sparsity,nIterations=50,
                             permutation_move=False,priors=priors,initType='pcaRand', learnPi=learnPi)
     FA0.init(**init)
     if nFix==None:
@@ -511,9 +512,9 @@ def preTrain(Y, terms, P_I, noise='gauss', nFix=None, priors=None, covariates=No
 
 
 #Sort by correlation to PC1    
-    MPC = abs(vcorrcoef(FA0.S.E1[:,SP.argsort(FA0.W.Ilabel)].T,X.T))[nFix:]
-    Ipi = SP.argsort(-MPC.ravel())
-    IpiRev = SP.argsort(MPC.ravel())
+    MPC = abs(vcorrcoef(FA0.S.E1[:,np.argsort(FA0.W.Ilabel)].T,X.T))[nFix:]
+    Ipi = np.argsort(-MPC.ravel())
+    IpiRev = np.argsort(MPC.ravel())
 
 
     mRange = list(range(FA0.components))
@@ -526,7 +527,7 @@ def preTrain(Y, terms, P_I, noise='gauss', nFix=None, priors=None, covariates=No
     pi = pi0[:,mRange]
     terms = terms0[mRange]     
     init={'init_data':CGauss(Y),'Pi':pi,'terms':terms, 'noise':noise}
-    FA = slalom.CSparseFA(components=K,sigmaOff=sigmaOff,sigmaOn=SP.ones(pi.shape[1])*1.0,sparsity=sparsity,
+    FA = slalom.CSparseFA(components=K,sigmaOff=sigmaOff,sigmaOn=np.ones(pi.shape[1])*1.0,sparsity=sparsity,
         nIterations=50,permutation_move=False,priors=priors,initType='pcaRand', learnPi=learnPi)
     FA.shuffle=True
     FA.nScale = 30
@@ -540,7 +541,7 @@ def preTrain(Y, terms, P_I, noise='gauss', nFix=None, priors=None, covariates=No
     pi = pi0[:,mRangeRev]
     terms = terms0[mRangeRev]
     init={'init_data':CGauss(Y),'Pi':pi,'terms':terms, 'noise':noise}
-    FArev = slalom.CSparseFA(components=K,sigmaOff=sigmaOff,sigmaOn=SP.ones(pi.shape[1])*1.0,sparsity=sparsity,
+    FArev = slalom.CSparseFA(components=K,sigmaOff=sigmaOff,sigmaOn=np.ones(pi.shape[1])*1.0,sparsity=sparsity,
         nIterations=50,permutation_move=False,priors=priors,initType='pcaRand', learnPi=learnPi)
     FArev.shuffle=True
     FArev.nScale = 30
@@ -551,11 +552,11 @@ def preTrain(Y, terms, P_I, noise='gauss', nFix=None, priors=None, covariates=No
         FArev.update() 
             
     #import pdb
-    IpiM = (-(0.5*(1./FArev.Alpha.E1[SP.argsort(mRangeRev)][nFix:])+.5*(1./FA.Alpha.E1[SP.argsort(mRange)][nFix:]))).argsort()  
+    IpiM = (-(0.5*(1./FArev.Alpha.E1[np.argsort(mRangeRev)][nFix:])+.5*(1./FA.Alpha.E1[np.argsort(mRange)][nFix:]))).argsort()  
       
 
-#    IpiM = (-(0.5*(1./FArev.Alpha.E1[SP.argsort(mRangeRev)][nFix:]*FArev.S.E1[:,SP.argsort(mRangeRev)][:,nFix:].std(0))+.5*(1./FA.Alpha.E1[SP.argsort(mRange)][nFix:]*FA.S.E1[:,SP.argsort(mRange)][:,nFix:].std(0)))).argsort()    
-    Ilabel = SP.hstack([SP.arange(nFix),IpiM+nFix])
+#    IpiM = (-(0.5*(1./FArev.Alpha.E1[np.argsort(mRangeRev)][nFix:]*FArev.S.E1[:,np.argsort(mRangeRev)][:,nFix:].std(0))+.5*(1./FA.Alpha.E1[np.argsort(mRange)][nFix:]*FA.S.E1[:,np.argsort(mRange)][:,nFix:].std(0)))).argsort()    
+    Ilabel = SP.sparse.hstack([np.arange(nFix),IpiM+nFix])
 
     return Ilabel
 
@@ -645,7 +646,7 @@ def load_hdf5(dFile, anno='MSigDB'):
 #     if verbose==True:
 #         print('Data file loaded')
     
-#     I = pd.DataFrame(SP.zeros((df.shape[0], len(terms))), index=[ind.title() for ind in df.index], columns=terms)
+#     I = pd.DataFrame(np.zeros((df.shape[0], len(terms))), index=[ind.title() for ind in df.index], columns=terms)
 
 #     for i_anno in range(len(terms)):      
 #         anno_expressed = list()
@@ -666,7 +667,7 @@ def load_hdf5(dFile, anno='MSigDB'):
 #         terms = [term.capitalize().replace('_',' ') for term in terms]
 
 #     data_out = {}
-#     data_out['terms'] = SP.array(terms)
+#     data_out['terms'] = np.array(terms)
 #     data_out['Y'] = df.values.T
 #     data_out['I'] = I.values
 #     data_out['genes'] = list(df.index)
@@ -746,7 +747,7 @@ def load_txt(dataFile,annoFiles, niceTerms=True,annoDBs='MSigDB',dataFile_delimi
                 anno_lower = [gene.title() for gene in anno[1:]] 
 
             annotated_genes.append(anno_lower)         
-        I = pd.DataFrame(SP.zeros((df.shape[0], len(terms))), index=[ind.title() for ind in df.index], columns=terms)
+        I = pd.DataFrame(np.zeros((df.shape[0], len(terms))), index=[ind.title() for ind in df.index], columns=terms)
 
         for i_anno in range(len(terms)):      
             anno_expressed = list()
@@ -774,9 +775,9 @@ def load_txt(dataFile,annoFiles, niceTerms=True,annoDBs='MSigDB',dataFile_delimi
             print('Processed annotation file',annoFile)  
 
     data_out = {}
-    data_out['terms'] = SP.hstack(termsList)
+    data_out['terms'] = SP.sparse.hstack(termsList)
     data_out['Y'] = df.values.T
-    data_out['I'] = SP.hstack(Ilist)
+    data_out['I'] = SP.sparse.hstack(Ilist)
     data_out['genes'] = list(df.index)
     data_out['lab'] = df.columns
     return data_out
@@ -789,12 +790,12 @@ def initFromPi(Y, terms, pi, gene_ids=None, nHidden=3, nHiddenSparse = 0,pruneGe
     init_factors = {}
     init_factors['initZ'] = initZ
 
-    #terms[terms=="hidden"] = ['%s%s' % t for t in zip(terms[terms=="hidden"], SP.arange(SP.sum(terms=="hidden")))]
-    #terms[terms=="hiddenSparse"] = ['%s%s' % t for t in zip(terms[terms=="hiddenSparse"], SP.arange(SP.sum(terms=="hiddenSparse")))]
+    #terms[terms=="hidden"] = ['%s%s' % t for t in zip(terms[terms=="hidden"], np.arange(np.sum(terms=="hidden")))]
+    #terms[terms=="hiddenSparse"] = ['%s%s' % t for t in zip(terms[terms=="hiddenSparse"], np.arange(np.sum(terms=="hiddenSparse")))]
 
     init={'init_data':CGauss(Y),'Pi':pi,'terms':terms, 'noise':noise, 'init_factors':init_factors}
     if not gene_ids is None:
-        gene_ids = SP.array(gene_ids)
+        gene_ids = np.array(gene_ids)
     FA = slalom.CSparseFA(components=pi.shape[1], idx_genes = None, gene_ids = gene_ids)   
     FA.saveInit=True
     FA.init(**init)  
@@ -878,7 +879,7 @@ def initFA(Y, terms, I, gene_ids=None, nHidden=3, nHiddenSparse = 0,pruneGenes=T
 
 
     #create initial pi matrix, which corresponds to the effective prior probability of an annotated link
-    pi = SP.zeros([num_genes,num_terms],dtype='float')    
+    pi = np.zeros([num_genes,num_terms],dtype='float')    
     #default FNR
     pi[:] = FNR
     #active links
@@ -886,61 +887,61 @@ def initFA(Y, terms, I, gene_ids=None, nHidden=3, nHiddenSparse = 0,pruneGenes=T
 
     #prune genes?
     if pruneGenes==True:
-        idx_genes  = SP.sum(I,1)>0
+        idx_genes  = np.sum(I,1)>0
         Y = Y[:,idx_genes]
         pi = pi[idx_genes,:]
         if not (gene_ids is None):
-            gene_ids = SP.array(gene_ids)[idx_genes]
+            gene_ids = np.array(gene_ids)[idx_genes]
     else:
-        idx_genes = SP.arange(Y.shape[1])        
+        idx_genes = np.arange(Y.shape[1])        
         if Y.shape[1]>10000:
             print("For large datasets we recommend setting the pruneGenes option to True.")
 
 
     #center data for Gaussian observation noise
     if noise=='gauss':
-        Y-=SP.mean(Y,0)       
+        Y-=np.mean(Y,0)       
 
 
 
     #include hidden variables
     if nHiddenSparse>0:
-        piSparse = SP.ones((Y.shape[1],nHiddenSparse))*.01
-        idxVar = SP.argsort(-Y.var(0))
+        piSparse = np.ones((Y.shape[1],nHiddenSparse))*.01
+        idxVar = np.argsort(-Y.var(0))
         for iH in range(piSparse.shape[1]):
-            idxOnH = SP.random.choice(idxVar[:100],20, replace=False)
+            idxOnH = np.random.choice(idxVar[:100],20, replace=False)
             piSparse[idxOnH,iH] = 0.99
-        pi = SP.hstack([piSparse,pi])
-        thiddenSparse = SP.repeat('hiddenSparse',nHiddenSparse)
-        termsHiddnSparse = ['%s%s' % t for t in zip(thiddenSparse, SP.arange(nHiddenSparse))]
-        terms = SP.hstack([termsHiddnSparse,terms])
+        pi = SP.sparse.hstack([piSparse,pi])
+        thiddenSparse = np.repeat('hiddenSparse',nHiddenSparse)
+        termsHiddnSparse = ['%s%s' % t for t in zip(thiddenSparse, np.arange(nHiddenSparse))]
+        terms = SP.sparse.hstack([termsHiddnSparse,terms])
         num_terms += nHiddenSparse
 
 
     thidden = SP.repeat('hidden',nHidden)
-    termsHidden = ['%s%s' % t for t in zip(thidden, SP.arange(nHidden))]
-    terms = SP.hstack([termsHidden,terms])    
+    termsHidden = ['%s%s' % t for t in zip(thidden, np.arange(nHidden))]
+    terms = SP.sparse.hstack([termsHidden,terms])    
 
-    pi = SP.hstack([SP.ones((Y.shape[1],nHidden))*.99,pi])
+    pi = SP.sparse.hstack([np.ones((Y.shape[1],nHidden))*.99,pi])
     num_terms += nHidden
 
     if not (covariates is None):
         if len(covariates.shape)==1:
-            covariates = covariates[:,SP.newaxis]
+            covariates = covariates[:,np.newaxis]
         nKnown=covariates.shape[1]
-        pi = SP.hstack([SP.ones((Y.shape[1],nKnown))*.99,pi])
+        pi = SP.sparse.hstack([np.ones((Y.shape[1],nKnown))*.99,pi])
         num_terms += nKnown
         tcovariates = SP.repeat('covariate',nKnown)
-        termsCovariates = ['%s%s' % t for t in zip(tcovariates, SP.arange(nKnown))]
-        terms = SP.hstack([termsCovariates,terms])            
+        termsCovariates = ['%s%s' % t for t in zip(tcovariates, np.arange(nKnown))]
+        terms = SP.sparse.hstack([termsCovariates,terms])            
        
 
 
 
 #mean term for non-Gaussian noise models
     if noise!='gauss':
-        terms = SP.hstack([ 'bias',terms])
-        pi = SP.hstack([SP.ones((Y.shape[1],1))*(1.-1e-10),pi])        
+        terms = SP.sparse.hstack([ 'bias',terms])
+        pi = SP.sparse.hstack([np.ones((Y.shape[1],1))*(1.-1e-10),pi])        
         num_terms += 1
 
     if do_preTrain==True:   
@@ -955,7 +956,7 @@ def initFA(Y, terms, I, gene_ids=None, nHidden=3, nHiddenSparse = 0,pruneGenes=T
 
     init={'init_data':CGauss(Y),'Pi':pi,'terms':terms, 'noise':noise, 'covariates':covariates, "dropFactors":dropFactors}
     if not gene_ids is None:
-        gene_ids = SP.array(gene_ids)
+        gene_ids = np.array(gene_ids)
 
     FA = slalom.CSparseFA(components=num_terms, idx_genes = idx_genes, gene_ids = gene_ids, priors=priors, learnPi=learnPi)   
     FA.saveInit=False
@@ -972,11 +973,11 @@ def addKnown(init_factors,dFile,data, idx_known=None):
         if len(dataFile['Known'][:].shape)>1:
             known = dataFile['Known'][:].T[:,idx_known]
         else:
-            known = dataFile['Known'][:][:,SP.newaxis]
+            known = dataFile['Known'][:][:,np.newaxis]
         #known -= known.mean(0)
         #known /= known.std(0)
-        data['terms'] = SP.hstack([ known_names,data['terms']])
-        pi = SP.hstack([SP.ones((data['Y'].shape[1],len(idx_known)))*.99,data['pi']])
+        data['terms'] = SP.sparse.hstack([ known_names,data['terms']])
+        pi = SP.sparse.hstack([np.ones((data['Y'].shape[1],len(idx_known)))*.99,data['pi']])
         data['pi'] = pi
         init_factors['Known'] = known
         init_factors['iLatent'] = init_factors['iLatent'] + len(idx_known)
@@ -997,7 +998,7 @@ def smartAppend(table,name,value):
 def dumpDictHdf5(RV,o):
     """ Dump a dictionary where each page is a list or an array """
     for key in list(RV.keys()):
-        o.create_dataset(name=key,data=SP.array(RV[key]),chunks=True,compression='gzip')
+        o.create_dataset(name=key,data=np.array(RV[key]),chunks=True,compression='gzip')
 
 def smartDumpDictHdf5(RV,o, chunks=True, close_file=True):
     """ Dump a dictionary where each page is a list or an array or still a dictionary (in this case, it iterates)"""
@@ -1007,9 +1008,9 @@ def smartDumpDictHdf5(RV,o, chunks=True, close_file=True):
             smartDumpDictHdf5(RV[key],g)
         else:
             if SP.isscalar(RV[key]):
-                o.create_dataset(name=key,data=SP.array(RV[key]),chunks=False)
+                o.create_dataset(name=key,data=np.array(RV[key]),chunks=False)
             else:
-                o.create_dataset(name=key,data=SP.array(RV[key]),chunks=True,compression='gzip')
+                o.create_dataset(name=key,data=np.array(RV[key]),chunks=True,compression='gzip')
     #if close_file==True: 
         #o.close()
      

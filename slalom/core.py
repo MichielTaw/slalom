@@ -395,6 +395,7 @@ class CSparseFA(AExpressionModule):
             logPi = np.log(self.Pi.E1[:,m]/(1-self.Pi.E1[:,m]))  
 
         sigma2Sigmaw = (1.0/self.Eps.E1)*self.Alpha.E1[m]
+        
 
                    
         setMinus = SP.int_(SP.hstack([list(range(M))[0:m],list(range(M))[m+1::]]))
