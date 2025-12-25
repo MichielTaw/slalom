@@ -18,6 +18,7 @@
 
 from .bayesnet.vbfa import *
 import scipy as SP
+import numpy as np
 from sklearn import metrics
 from sklearn.linear_model import LinearRegression
 import re
@@ -119,7 +120,7 @@ class CSparseFA(AExpressionModule):
             epsK = self.Eps.E1.copy()
             epsK[self.Eps>1/4.]=1/4.
             Xi = SP.dot(self.S.E1,(self.W.C[:,:,0]*self.W.E1).transpose())
-            F[isExpressed==0] = (Xi - (1./(1.+SP.exp(-Xi)))/epsK)[isExpressed==0]
+            F[isExpressed==0] = (Xi - (1./(1.+np.exp(-Xi)))/epsK)[isExpressed==0]
         return F        
 
     def getRelevance(self):
@@ -411,7 +412,7 @@ class CSparseFA(AExpressionModule):
         
         u_qm = logPi + 0.5*SP.log(sigma2Sigmaw) - 0.5*SP.log(SmTSmSig) + (0.5*self.Eps.E1)*((diff**2)/SmTSmSig)
         with SP.errstate(over='ignore'):
-            self.W.C[:, m,0] = 1./(1+SP.exp(-u_qm))
+            self.W.C[:, m,0] = 1./(1+np.exp(-u_qm))
 
 
         self.W.C[:,m,1] = 1-self.W.C[:,m,0]
@@ -527,7 +528,7 @@ class CSparseFA(AExpressionModule):
             epsK = self.Eps.E1.copy()#[self.Eps.E1>1/4.]=1/4
             epsK[self.Eps.E1>1/4.]=1/4.
             Xi = SP.dot(self.S.E1,(self.W.C[:, :,0]*self.W.E1).transpose())
-            self.meanX[self.isExpressed==0] = (Xi - (1./(1.+SP.exp(-Xi)))/epsK)[self.isExpressed==0]
+            self.meanX[self.isExpressed==0] = (Xi - (1./(1.+np.exp(-Xi)))/epsK)[self.isExpressed==0]
         elif self.noise=='poisson':
             Xi = SP.dot(self.S.E1,(self.W.C[:, :,0]*self.W.E1).transpose())
             self.meanX = Xi - self.fprime(Xi, self.Z.E1)/SP.repeat(self.kappa[:,SP.newaxis],self._N,1).T
