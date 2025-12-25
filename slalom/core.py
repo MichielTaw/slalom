@@ -411,6 +411,7 @@ class CSparseFA(AExpressionModule):
         #update C and W 
         
         u_qm = logPi + 0.5*SP.log(sigma2Sigmaw) - 0.5*SP.log(SmTSmSig) + (0.5*self.Eps.E1)*((diff**2)/SmTSmSig)
+        u_qm = np.array(u_qm, dtype=float)
         with SP.errstate(over='ignore'):
             self.W.C[:, m,0] = 1./(1+np.exp(-u_qm))
 
