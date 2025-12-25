@@ -23,10 +23,11 @@ import numpy.linalg as linalg
 import scipy.special as special
 import time
 import pdb
+import numpy as np
 
 
 def savelog(x):
-    return S.log(x+1E-10)
+    return np.log(x+1E-10)
 
 class ANode(object):
     ''' Abstract base class for all components of a probabilistic approximation model '''
@@ -62,10 +63,10 @@ class ADirichletNode(ANode):
         L.debug('ADirichletNode __init__')
         ANode.__init__(self)
         self._prior = prior
-        self._a0= S.array(prior)
-        self.a = S.zeros(dim)
-        self.E1= S.zeros(dim)
-        self.lnE=S.zeros(dim)
+        self._a0=np.array(prior)
+        self.a =np.zeros(dim)
+        self.E1=np.zeros(dim)
+        self.lnE=np.zeros(dim)
 
         self.a[:] = self.a0
         ADirichletNode.update(self)
@@ -74,7 +75,7 @@ class ADirichletNode(ANode):
         ''' update expectation value '''
         L.debug('ADirichletNode update')
         S = self.a.sum(axis=-1) # add up responsibilities
-        shape = list(S.shape)
+        shape = list(np.shape)
         shape.append(1)
         self.E1 = self.a*(1/S).reshape(shape) # normalise over last dimension to calculate E1 and lnE
         self.lnE= special.psi(self.a)-special.psi(self.a.sum(axis=-1)).reshape(shape)
@@ -93,19 +94,19 @@ class ADirichletNode(ANode):
 
 class ABernoulliNode(ANode):
     ''' Abstract base class for Bernoulli node for mixture models '''
-    def __init__(self, dim=[2],prior=S.array([0.5,0.5]), E1=None, init='prior'):
+    def __init__(self, dim=[2],prior=np.array([0.5,0.5]), E1=None, init='prior'):
         L.debug('ABernoulliNode __init__')
         ANode.__init__(self)        
         self._prior = prior
         
         if E1 is None:
-            if init == 'prior': E1 = prior[1]*S.ones(dim)
+            if init == 'prior': E1 = prior[1]*np.ones(dim)
             elif init == 'rnd': E1 = random.random_sample(dim)
             elif init == 'rndass': # random assignment
-                E1 = S.zeros(dim);
+                E1 =np.zeros(dim);
                 for i in range(dim[0]): E1[i,random.randint(0,dim[1])] = 1            
             elif init == 'rndsoftass': # random soft assignment
-                E1 = S.ones(dim)/(10.*(dim[1] - 1));
+                E1 = np.ones(dim)/(10.*(dim[1] - 1));
                 for i in range(dim[0]): E1[i,random.randint(0,dim[1])] = 0.9
             self.E1 = E1
             self.E2 = E1
@@ -119,7 +120,7 @@ class ABernoulliNode(ANode):
         L.debug('ABernoulliNode update')
         if P is not None:
             S = P.sum(axis=-1)
-        shape = list(S.shape)
+        shape = list(np.shape)
         shape.append(1)
         P *= (1/(S+1E-10)).reshape(shape)
         #expectation value is the p(1) which is assumed to be stored in the last column; hence this construction...
@@ -129,7 +130,7 @@ class ABernoulliNode(ANode):
     
     def entropy(self):
         L.debug('ABernoulliNode entropy')
-        #return -(self.E1*S.log(self.E1 + 1E-10)).sum()
+        #return -(self.E1*np.log(self.E1 + 1E-10)).sum()
         return -(self.E1*savelog(self.E1) + (1-self.E1)*savelog(1-self.E1))
 
 
@@ -147,19 +148,19 @@ class ABetaNode(ANode):
         ANode.__init__(self)
 
         #save prior:
-        self._prior = S.vstack(prior)
+        self._prior = np.vstack(prior)
 
         self.a=[]
         self.b = []     
-        for iD in S.arange(len(dim)):
+        for iD in np.arange(len(dim)):
             nD = dim[iD]
-            self.a.append(S.ones(nD)*self._prior[iD,0])
-            self.b.append(S.ones(nD)*self._prior[iD,1])
+            self.a.append(np.ones(nD)*self._prior[iD,0])
+            self.b.append(np.ones(nD)*self._prior[iD,1])
 
-        self.a = S.repeat(S.hstack(self.a)[:,S.newaxis],K,1).T
-        self.b = S.repeat(S.hstack(self.b)[:,S.newaxis],K,1).T
-        #self.a = S.hstack(self.a)
-        #self.b = S.hstack(self.b)      
+        self.a = np.repeat(S.sparse.hstack(self.a)[:,np.newaxis],K,1).T
+        self.b = np.repeat(S.sparse.hstack(self.b)[:,np.newaxis],K,1).T
+        #self.a = S.sparse.hstack(self.a)
+        #self.b = S.sparse.hstack(self.b)      
 
         self.pa = self.a.copy()
         self.pb = self.b.copy()
@@ -190,8 +191,8 @@ class AGammaNode(ANode):
         self.pb = prior[1]
         # self._dim = dim
 
-        self.a  = S.ones(dim)*self.pa
-        self.b  = S.ones(dim)*self.pb
+        self.a  = np.ones(dim)*self.pa
+        self.b  = np.ones(dim)*self.pb
 
         AGammaNode.update(self) # updates E1, E2
 
@@ -203,15 +204,15 @@ class AGammaNode(ANode):
         L.debug('AGammaNode update')
 
         self.E1 = self.b/self.a
-        self.E2 = -S.log(self.a) + special.digamma(self.b)
-        self.lnE = special.digamma(self.a) - S.log(self.b)
+        self.E2 = -np.log(self.a) + special.digamma(self.b)
+        self.lnE = special.digamma(self.a) - np.log(self.b)
 
 
     def entropy(self):
         L.debug('AGammaNode entropy')
         #I think this is wrong
-        #return (self.a - S.log(self.b) + special.gammaln(self.a) + (1. - self.a)*special.digamma(self.a)).sum()
-        return (self.b - S.log(self.a) + special.gammaln(self.b) + (1-self.b)*special.digamma(self.b)).sum()
+        #return (self.a - np.log(self.b) + special.gammaln(self.a) + (1. - self.a)*special.digamma(self.a)).sum()
+        return (self.b - np.log(self.a) + special.gammaln(self.b) + (1-self.b)*special.digamma(self.b)).sum()
     
 
 
@@ -219,10 +220,10 @@ class AGammaNode(ANode):
         L.debug('AGammaNode calcBound')
 
         #Ithink this is wrong
-        #b1=self.b.shape[0]*self.pa*S.log(self.pb) + ((self.pa - 1)*(special.digamma(self.a) - S.log(self.b)) - self.pb*(self.a/self.b) - special.gammaln(self.pa)).sum() + self.entropy()
+        #b1=self.b.shape[0]*self.pa*np.log(self.pb) + ((self.pa - 1)*(special.digamma(self.a) - np.log(self.b)) - self.pb*(self.a/self.b) - special.gammaln(self.pa)).sum() + self.entropy()
 
-        b1= (-special.gammaln(self.pb) + self.pb*S.log(self.pa) + (self.pb-1)*(S.log(self.b)-S.log(self.a)) - self.pa*(self.b/self.a)).sum() + self.entropy()
-        #b2=(-self.b*S.log(self.a) + self.pb*S.log(self.pa) + special.gammaln(self.b) - special.gamma(self.pb) - self.pa*(self.E1) + self.b -(self.b-self.pb)*(special.digamma(self.b)-S.log(self.a))).sum()
+        b1= (-special.gammaln(self.pb) + self.pb*np.log(self.pa) + (self.pb-1)*(np.log(self.b)-np.log(self.a)) - self.pa*(self.b/self.a)).sum() + self.entropy()
+        #b2=(-self.b*np.log(self.a) + self.pb*np.log(self.pa) + special.gammaln(self.b) - special.gamma(self.pb) - self.pa*(self.E1) + self.b -(self.b-self.pb)*(special.digamma(self.b)-np.log(self.a))).sum()
         return b1
         pass
 
@@ -236,19 +237,19 @@ class AVGaussNode(ANode):
 
 
 
-    def __init__(self,dim=[1,1],cdim=S.nan,prior=[0,1]):
+    def __init__(self,dim=[1,1],cdim=np.nan,prior=[0,1]):
         L.debug('AVGaussNode __init__')
         ANode.__init__(self)        
 #        self._dim = dim
 #        self._cdim = cdim
         self._prior = prior
-        if(S.isnan(cdim)):  cdim = dim[0]
+        if(np.isnan(cdim)):  cdim = dim[0]
 
         self.E1 = prior[0] + random.standard_normal(size=dim)
-        self.E2 = S.zeros([dim[0],dim[1],dim[1]])
-        self.cov= S.zeros([cdim,dim[1],dim[1]])
+        self.E2 =np.zeros([dim[0],dim[1],dim[1]])
+        self.cov=np.zeros([cdim,dim[1],dim[1]])
 
-        for c in range(cdim): self.cov[c,:,:] = prior[1]*S.eye(dim[1])
+        for c in range(cdim): self.cov[c,:,:] = prior[1]*np.eye(dim[1])
         AVGaussNode.update(self)
 
 
@@ -257,7 +258,7 @@ class AVGaussNode(ANode):
         self.E2[:,:,:] = self.cov
         #pdb.set_trace()
         for n in range(self.E2.shape[0]):
-            self.E2[n,:,:] = self.E2[n,:,:] + S.outer(self.E1[n,:],self.E1[n,:])
+            self.E2[n,:,:] = self.E2[n,:,:] + np.outer(self.E1[n,:],self.E1[n,:])
 
     def calcBound(self, net):
         return 0
@@ -289,7 +290,7 @@ class AGaussNode(ANode):
         self.E1 = E1
         #make sure this works also without any second moment
         if (E2 is None) and (cov is None) and (prec is None):
-            cov = S.array(1E-6)
+            cov =np.array(1E-6)
         if E2 is not None:
             self.E2 = E2
             self.cov = self.E2 - self.E1**2
