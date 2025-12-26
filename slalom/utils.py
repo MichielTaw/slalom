@@ -775,9 +775,9 @@ def load_txt(dataFile,annoFiles, niceTerms=True,annoDBs='MSigDB',dataFile_delimi
             print('Processed annotation file',annoFile)  
 
     data_out = {}
-    data_out['terms'] = SP.sparse.hstack(termsList)
+    data_out['terms'] = np.hstack(termsList)
     data_out['Y'] = df.values.T
-    data_out['I'] = SP.sparse.hstack(Ilist)
+    data_out['I'] = np.hstack(Ilist)
     data_out['genes'] = list(df.index)
     data_out['lab'] = df.columns
     return data_out
