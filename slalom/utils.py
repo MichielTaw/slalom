@@ -288,7 +288,8 @@ def plotRelevance(FA,Nactive=20,stacked=True, madFilter=0.4,annotated=True,unann
     if unannotated==True:
         i_use.extend(FA.iLatent)
     if annotated==True:
-        i_use.extend(SP.setxor1d(SP.sparse.hstack([SP.where(FA.terms=='bias')[0],FA.iLatentSparse, FA.iLatent]), np.arange(len(FA.terms))))
+        i_use.extend(SP.setxor1d(np.hstack([SP.where(FA.terms=='bias')[0],FA.iLatentSparse, FA.iLatent]), np.arange(len(FA.terms))))
+
     i_use = np.array(i_use)
 
 
@@ -556,7 +557,7 @@ def preTrain(Y, terms, P_I, noise='gauss', nFix=None, priors=None, covariates=No
       
 
 #    IpiM = (-(0.5*(1./FArev.Alpha.E1[np.argsort(mRangeRev)][nFix:]*FArev.S.E1[:,np.argsort(mRangeRev)][:,nFix:].std(0))+.5*(1./FA.Alpha.E1[np.argsort(mRange)][nFix:]*FA.S.E1[:,np.argsort(mRange)][:,nFix:].std(0)))).argsort()    
-    Ilabel = SP.sparse.hstack([np.arange(nFix),IpiM+nFix])
+    Ilabel = np.hstack([np.arange(nFix),IpiM+nFix])
 
     return Ilabel
 
