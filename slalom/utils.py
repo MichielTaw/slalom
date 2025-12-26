@@ -914,13 +914,13 @@ def initFA(Y, terms, I, gene_ids=None, nHidden=3, nHiddenSparse = 0,pruneGenes=T
         pi = SP.sparse.hstack([piSparse,pi])
         thiddenSparse = np.repeat('hiddenSparse',nHiddenSparse)
         termsHiddnSparse = ['%s%s' % t for t in zip(thiddenSparse, np.arange(nHiddenSparse))]
-        terms = SP.sparse.hstack([termsHiddnSparse,terms])
+        terms = np.hstack([termsHiddnSparse,terms])
         num_terms += nHiddenSparse
 
 
     thidden = SP.repeat('hidden',nHidden)
     termsHidden = ['%s%s' % t for t in zip(thidden, np.arange(nHidden))]
-    terms = SP.sparse.hstack([termsHidden,terms])    
+    terms = np.hstack([termsHidden,terms])    
 
     pi = SP.sparse.hstack([np.ones((Y.shape[1],nHidden))*.99,pi])
     num_terms += nHidden
@@ -933,7 +933,7 @@ def initFA(Y, terms, I, gene_ids=None, nHidden=3, nHiddenSparse = 0,pruneGenes=T
         num_terms += nKnown
         tcovariates = SP.repeat('covariate',nKnown)
         termsCovariates = ['%s%s' % t for t in zip(tcovariates, np.arange(nKnown))]
-        terms = SP.sparse.hstack([termsCovariates,terms])            
+        terms = np.hstack([termsCovariates,terms])            
        
 
 
