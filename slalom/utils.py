@@ -756,8 +756,13 @@ def load_txt(dataFile,annoFiles, niceTerms=True,annoDBs='MSigDB',dataFile_delimi
                 if g in I.index:
                     anno_expressed.append(g)    
             I.loc[anno_expressed,terms[i_anno]]=1.
-            if verbose==True  and SP.mod(i_anno,50)==0:
-                print('%i terms out of %i terms loaded for current annotation file' % (i_anno, len(terms)))
+            #if verbose==True  and SP.mod(i_anno,50)==0:
+            #    print('%i terms out of %i terms loaded for current annotation file' % (i_anno, len(terms)))
+        n_terms_loaded = I.sum(axis=0).astype(bool).sum()  # Count terms with >0 genes
+        if verbose==True:
+            print('%i terms out of %i terms loaded for current annotation file' % (n_terms_loaded, len(terms)))
+
+
 
         if niceTerms[i_file]==True:
             if annoDB=='msigdb':
