@@ -941,7 +941,7 @@ def initFA(Y, terms, I, gene_ids=None, nHidden=3, nHiddenSparse = 0,pruneGenes=T
 #mean term for non-Gaussian noise models
     if noise!='gauss':
         terms = SP.sparse.hstack([ 'bias',terms])
-        pi = SP.sparse.hstack([np.ones((Y.shape[1],1))*(1.-1e-10),pi])        
+        pi = np.hstack([np.ones((Y.shape[1],1))*(1.-1e-10),pi])        
         num_terms += 1
 
     if do_preTrain==True:   
@@ -977,7 +977,7 @@ def addKnown(init_factors,dFile,data, idx_known=None):
         #known -= known.mean(0)
         #known /= known.std(0)
         data['terms'] = SP.sparse.hstack([ known_names,data['terms']])
-        pi = SP.sparse.hstack([np.ones((data['Y'].shape[1],len(idx_known)))*.99,data['pi']])
+        pi = np.hstack([np.ones((data['Y'].shape[1],len(idx_known)))*.99,data['pi']])
         data['pi'] = pi
         init_factors['Known'] = known
         init_factors['iLatent'] = init_factors['iLatent'] + len(idx_known)
