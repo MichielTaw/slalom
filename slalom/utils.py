@@ -922,7 +922,7 @@ def initFA(Y, terms, I, gene_ids=None, nHidden=3, nHiddenSparse = 0,pruneGenes=T
     termsHidden = ['%s%s' % t for t in zip(thidden, np.arange(nHidden))]
     terms = np.hstack([termsHidden,terms])    
 
-    pi = SP.sparse.hstack([np.ones((Y.shape[1],nHidden))*.99,pi])
+    pi = np.hstack([np.ones((Y.shape[1],nHidden))*.99,pi])
     num_terms += nHidden
 
     if not (covariates is None):
