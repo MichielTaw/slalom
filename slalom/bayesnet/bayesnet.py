@@ -157,8 +157,8 @@ class ABetaNode(ANode):
             self.a.append(np.ones(nD)*self._prior[iD,0])
             self.b.append(np.ones(nD)*self._prior[iD,1])
 
-        self.a = np.repeat(S.sparse.hstack(self.a)[:,np.newaxis],K,1).T
-        self.b = np.repeat(S.sparse.hstack(self.b)[:,np.newaxis],K,1).T
+        self.a = np.repeat(np.hstack(self.a)[:,np.newaxis],K,1).T
+        self.b = np.repeat(np.hstack(self.b)[:,np.newaxis],K,1).T
         #self.a = S.sparse.hstack(self.a)
         #self.b = S.sparse.hstack(self.b)      
 
